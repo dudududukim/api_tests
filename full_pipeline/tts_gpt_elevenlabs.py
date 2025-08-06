@@ -14,15 +14,12 @@ OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY')
 VOICE_ID = 'ksaI0TCD9BstzEzlxj4q'
 
-# Set OpenAI API key
 aclient = AsyncOpenAI(api_key=OPENAI_API_KEY)
 
 def is_installed(lib_name):
     return shutil.which(lib_name) is not None
 
-
 async def text_chunker(chunks):
-    """Split text into chunks, ensuring to not break sentences."""
     splitters = (".", ",", "?", "!", ";", ":", "—", "-", "(", ")", "[", "]", "}", " ")
     buffer = ""
 
@@ -42,18 +39,15 @@ async def text_chunker(chunks):
         print(buffer + " ", end="", flush=True)
         yield buffer + " "
 
-
 async def stream(audio_stream):
-    """Stream audio data using mpv player."""
     if not is_installed("mpv"):
-        raise ValueError(
-            "mpv not found, necessary to stream audio. "
-            "Install instructions: https://mpv.io/installation/"
-        )
+        raise ValueError("mpv not found")
 
     mpv_process = subprocess.Popen(
         ["mpv", "--no-cache", "--no-terminal", "--", "fd://0"],
-        stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
     )
 
     print("Started streaming audio")
@@ -66,20 +60,20 @@ async def stream(audio_stream):
         mpv_process.stdin.close()
     mpv_process.wait()
 
-
 async def text_to_speech_input_streaming(voice_id, text_iterator):
-    """Send text to ElevenLabs API and stream the returned audio."""
     uri = f"wss://api.elevenlabs.io/v1/text-to-speech/{voice_id}/stream-input?model_id=eleven_multilingual_v2"
 
     async with websockets.connect(uri) as websocket:
         await websocket.send(json.dumps({
             "text": " ",
-            "voice_settings": {"stability": 0.5, "similarity_boost": 0.8},
+            "voice_settings": {"stability": 0.5, "similarity_boost": 0.75, "speed" : 1.0},
+            "generation_config": {
+                                    "chunk_length_schedule": [50, 100, 150, 200]  # 더 작은 값들
+                                },
             "xi_api_key": ELEVENLABS_API_KEY,
         }))
 
         async def listen():
-            """Listen to the websocket for audio data and stream it."""
             while True:
                 try:
                     message = await websocket.recv()
@@ -98,24 +92,32 @@ async def text_to_speech_input_streaming(voice_id, text_iterator):
             await websocket.send(json.dumps({"text": text, "try_trigger_generation": True}))
 
         await websocket.send(json.dumps({"text": ""}))
-
         await listen_task
 
-
 async def chat_completion(query):
-    """Retrieve text from OpenAI and pass it to the text-to-speech function."""
-    response = await aclient.chat.completions.create(model='gpt-4', messages=[{'role': 'user', 'content': query}],
-    temperature=1, stream=True)
+    response = await aclient.chat.completions.create(
+        model='gpt-4o',
+        messages=[
+            {'role': 'system', 'content': 'You are a Korean man in his 20s. Keep conversations short and concise.'},
+            {'role': 'user', 'content': query}
+        ],
+        temperature=1,
+        stream=True
+    )
 
     async def text_iterator():
         async for chunk in response:
             delta = chunk.choices[0].delta
-            yield delta.content
+            if delta.content:
+                yield delta.content
 
     await text_to_speech_input_streaming(VOICE_ID, text_iterator())
 
-
-# Main execution
-if __name__ == "__main__":
-    user_query = "Hello, give me brief utterence in korean."
-    asyncio.run(chat_completion(user_query))
+def process_query(query, verbose=False):
+    try:
+        asyncio.run(chat_completion(query))
+    except Exception as e:
+        if verbose:
+            print(f"쿼리 처리 실패: {e}")
+        else:
+            print("응답 생성 중 오류가 발생했습니다.")
