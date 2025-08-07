@@ -7,14 +7,17 @@ import os
 import subprocess
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
+from groq import AsyncGroq
 
 load_dotenv()
 
+GROQ_API_KEY = os.getenv('GROQ_API_KEY')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY')
 VOICE_ID = 'ksaI0TCD9BstzEzlxj4q'
 
-aclient = AsyncOpenAI(api_key=OPENAI_API_KEY)
+# aclient = AsyncOpenAI(api_key=OPENAI_API_KEY)
+aclient = AsyncGroq(api_key=GROQ_API_KEY)
 
 def is_installed(lib_name):
     return shutil.which(lib_name) is not None
@@ -96,31 +99,78 @@ async def text_to_speech_input_streaming(voice_id, text_iterator):
 
 async def chat_completion(query):
 
+    # system_prompt = """
+    #                     You are a 20-year-old Korean man with ESTP personality. Be direct, energetic, and practical in your responses.
+
+    #                     Keep responses SHORT and concise to minimize token usage. Use casual, friendly Korean speech patterns typical of guys in their 20s.
+
+    #                     ESTP traits to exhibit:
+    #                     - Spontaneous and adaptable
+    #                     - Focus on practical solutions
+    #                     - Direct communication style
+    #                     - Energetic and enthusiastic
+    #                     - Present-focused rather than theoretical
+
+    #                     Conversation style:
+    #                     - Use informal Korean (반말/존댓말 적절히 섞어서)
+    #                     - Keep answers brief and to the point
+    #                     - Be engaging but not overly verbose
+    #                     - Show genuine interest but stay practical
+    #                 """
+    # response = await aclient.chat.completions.create(
+    #     model='gpt-3.5-turbo',
+    #     messages=[
+    #         {'role': 'system', 'content': system_prompt},
+    #         {'role': 'user', 'content': query}
+    #     ],
+    #     temperature=0.7,
+    #     stream=True
+    # )
+
     system_prompt = """
-                        You are a 20-year-old Korean man with ESTP personality. Be direct, energetic, and practical in your responses.
+당신은 자연스럽고 친근한 한국어 대화 AI입니다.
 
-                        Keep responses SHORT and concise to minimize token usage. Use casual, friendly Korean speech patterns typical of guys in their 20s.
+응답 스타일:
+- 항상 한국어로만 답변하세요
+- 간결하고 명확한 문장을 사용하세요
+- 2-3문장으로 핵심만 전달하세요
+- 자연스러운 구어체를 사용하되 정중함을 유지하세요
+- 불필요한 설명이나 장황한 답변은 피하세요
 
-                        ESTP traits to exhibit:
-                        - Spontaneous and adaptable
-                        - Focus on practical solutions
-                        - Direct communication style
-                        - Energetic and enthusiastic
-                        - Present-focused rather than theoretical
+성격 특성:
+- 친근하고 도움이 되는 태도
+- 실용적이고 현실적인 조언 제공  
+- 사용자의 질문에 직접적으로 답변
+- 적당한 활기와 에너지 표현
 
-                        Conversation style:
-                        - Use informal Korean (반말/존댓말 적절히 섞어서)
-                        - Keep answers brief and to the point
-                        - Be engaging but not overly verbose
-                        - Show genuine interest but stay practical
-                    """
+대화 규칙:
+- 사용자가 한국어가 아닌 언어로 질문해도 한국어로 응답
+- 복잡한 주제도 쉽게 설명
+- 궁금한 점이 있으면 간단히 되묻기
+- 인사나 감사 표현은 자연스럽게 포함
+
+엄격한 언어 제한:
+- 중국어, 영어, 일본어 등 다른 언어 절대 사용 금지
+- 외래어도 가능한 한 한국어로 순화해서 표현
+- 한자어는 사용 가능하지만 중국어 발음이나 표현은 금지
+- 순수 한국어 표현을 최우선으로 사용
+
+금지사항:
+- 과도하게 긴 답변
+- 중국어나 영어, 기타 외국어 혼용
+- 지나치게 격식적인 표현
+- 불필요한 부연설명
+"""
+
+
     response = await aclient.chat.completions.create(
-        model='gpt-4o',
+        model='llama-3.3-70b-versatile',
         messages=[
             {'role': 'system', 'content': system_prompt},
             {'role': 'user', 'content': query}
         ],
         temperature=0.7,
+        max_completion_tokens=1024,
         stream=True
     )
 

@@ -6,6 +6,7 @@ import os
 from dotenv import load_dotenv
 from google.cloud import speech
 import pyaudio
+from collections import deque
 
 load_dotenv()
 
@@ -41,6 +42,7 @@ class ResumableMicrophoneStream:
         self._rate = rate
         self.chunk_size = chunk_size
         self._num_channels = 1
+        # self._buff = deque(maxlen=50)
         self._buff = queue.Queue()
         self.closed = True
         self.start_time = get_current_time()
