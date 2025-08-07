@@ -9,6 +9,9 @@ from openai import AsyncOpenAI
 from dotenv import load_dotenv
 from groq import AsyncGroq
 
+# from files
+from conversational_manager import ConversationManager
+
 load_dotenv()
 
 GROQ_API_KEY = os.getenv('GROQ_API_KEY')
@@ -18,6 +21,7 @@ VOICE_ID = 'ksaI0TCD9BstzEzlxj4q'
 
 # aclient = AsyncOpenAI(api_key=OPENAI_API_KEY)
 aclient = AsyncGroq(api_key=GROQ_API_KEY)
+conversation_manager = ConversationManager()
 
 def is_installed(lib_name):
     return shutil.which(lib_name) is not None
@@ -161,29 +165,41 @@ async def chat_completion(query):
 - 지나치게 격식적인 표현
 - 불필요한 부연설명
 """
+    conversation_manager.add_message("user", query)
 
+    messages = [{"role": "system", "content": system_prompt}]
+    messages.extend(conversation_manager.get_messages_for_api())
 
     response = await aclient.chat.completions.create(
         model='llama-3.3-70b-versatile',
-        messages=[
-            {'role': 'system', 'content': system_prompt},
-            {'role': 'user', 'content': query}
-        ],
+        messages=messages,
         temperature=0.7,
         max_completion_tokens=1024,
         stream=True
     )
 
+    response_content = ""
+
     async def text_iterator():
+        nonlocal response_content
         async for chunk in response:
             delta = chunk.choices[0].delta
             if delta.content:
+                response_content += delta.content
                 yield delta.content
 
     await text_to_speech_input_streaming(VOICE_ID, text_iterator())
 
+    if response_content.strip():
+        conversation_manager.add_message("assistant", response_content.strip())
+
 def process_query(query, verbose=False):
     try:
+        if query.strip().lower() in ['기록삭제', '대화삭제', '히스토리삭제']:
+            conversation_manager.clear_history()
+            print("대화 기록을 삭제했습니다.")
+            return
+        
         asyncio.run(chat_completion(query))
     except Exception as e:
         if verbose:

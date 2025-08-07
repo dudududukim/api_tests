@@ -7,6 +7,7 @@ from tts_gpt_elevenlabs import process_query
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--verbose', action='store_true', help='Enable verbose logging')
+parser.add_argument('--clear-history', action='store_true', help='Clear conversation history on start')
 args = parser.parse_args()
 
 load_dotenv()
@@ -23,11 +24,17 @@ if not os.getenv('ELEVENLABS_API_KEY'):
     print("Error: ELEVENLABS_API_KEY not found in .env file")
     sys.exit(1)
 
+if args.clear_history:
+    from conversational_manager import ConversationManager
+    ConversationManager().clear_history()
+    print("대화 기록을 초기화했습니다.")
+    
 print("대화 시작... '종료' 또는 '끝'이라고 말하면 종료됩니다.")
 
 try:
     while True:
         try:
+
             if args.verbose:
                 print("음성 입력 대기 중...")
             
