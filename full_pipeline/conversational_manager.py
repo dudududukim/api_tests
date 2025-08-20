@@ -3,6 +3,7 @@ import os
 from datetime import datetime
 from typing import List, Dict
 
+
 class ConversationManager:
     def __init__(self, history_file="conversation_history.json", max_history=20):
         self.history_file = history_file
@@ -31,15 +32,11 @@ class ConversationManager:
             "content": content,
             "timestamp": datetime.now().isoformat()
         })
-        
-        if len(self.conversation_history) > self.max_history * 2:
-            self.conversation_history = self.conversation_history[-self.max_history * 2:]
-        
         self.save_history()
     
     def get_messages_for_api(self) -> List[Dict]:
         return [{"role": msg["role"], "content": msg["content"]} 
-                for msg in self.conversation_history[-self.max_history:]]
+                for msg in self.conversation_history[-self.max_history * 2:]]
     
     def clear_history(self):
         self.conversation_history = []

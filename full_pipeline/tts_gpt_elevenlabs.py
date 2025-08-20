@@ -19,8 +19,8 @@ OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY')
 VOICE_ID = 'ksaI0TCD9BstzEzlxj4q'
 
-# aclient = AsyncOpenAI(api_key=OPENAI_API_KEY)
-aclient = AsyncGroq(api_key=GROQ_API_KEY)
+aclient = AsyncOpenAI(api_key=OPENAI_API_KEY)
+# aclient = AsyncGroq(api_key=GROQ_API_KEY)
 conversation_manager = ConversationManager()
 
 def is_installed(lib_name):
@@ -171,7 +171,8 @@ async def chat_completion(query):
     messages.extend(conversation_manager.get_messages_for_api())
 
     response = await aclient.chat.completions.create(
-        model='llama-3.3-70b-versatile',
+        # model='llama-3.3-70b-versatile',
+        model='gpt-4o-mini',
         messages=messages,
         temperature=0.7,
         max_completion_tokens=1024,

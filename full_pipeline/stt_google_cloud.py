@@ -14,14 +14,14 @@ STREAMING_LIMIT = 240000
 SAMPLE_RATE = 16000
 CHUNK_SIZE = int(SAMPLE_RATE / 10)
 
-RED = "\033[0;31m"
+RED = "\033[0;31m"      # ANSI escape code
 GREEN = "\033[0;32m"
 YELLOW = "\033[0;33m"
 
 def get_current_time():
     return int(round(time.time() * 1000))
 
-def find_respeaker_device():
+def find_respeaker_device():        # retunring respeaker device index
     p = pyaudio.PyAudio()
     try:
         for i in range(p.get_device_count()):
@@ -52,7 +52,7 @@ class ResumableMicrophoneStream:
         self.result_end_time = 0
         self.is_final_end_time = 0
         self.final_request_end_time = 0
-        self.bridging_offset = 0
+        self.bridging_offset = 0            # for the session limit (4 min. in google cloud stt)
         self.last_transcript_was_final = False
         self.new_stream = True
         self.device_index = find_respeaker_device()

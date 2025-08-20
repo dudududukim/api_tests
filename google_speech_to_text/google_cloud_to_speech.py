@@ -1,3 +1,5 @@
+# https://cloud.google.com/speech-to-text/docs/transcribe-streaming-audio?hl=ko#speech-streaming-mic-recognize-python
+
 import queue
 import re
 import sys
