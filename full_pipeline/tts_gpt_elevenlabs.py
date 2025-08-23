@@ -9,6 +9,11 @@ from openai import AsyncOpenAI
 from dotenv import load_dotenv
 from groq import AsyncGroq
 
+import time
+def now():
+    return time.strftime('%H:%M:%S.') + f"{int((time.time() % 1) * 1000):03d}"
+
+
 # from files
 from conversational_manager import ConversationManager
 
@@ -56,9 +61,11 @@ async def stream(audio_stream):
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )
-
-    print("Started streaming audio")
+    first = True
     async for chunk in audio_stream:
+        if first:
+            print(f"\n{now()} [Audio Start] Started streaming audio")
+            first=False
         if chunk:
             mpv_process.stdin.write(chunk)
             mpv_process.stdin.flush()

@@ -8,7 +8,12 @@ from google.cloud import speech
 import pyaudio
 from collections import deque
 
+import time
+def now():
+    return time.strftime('%H:%M:%S.') + f"{int((time.time() % 1) * 1000):03d}"
+
 load_dotenv()
+
 
 STREAMING_LIMIT = 240000
 SAMPLE_RATE = 16000
@@ -29,7 +34,7 @@ def find_respeaker_device():        # retunring respeaker device index
             if "respeaker" in device_info['name'].lower():
                 print(f"Found Respeaker: {device_info['name']}")
                 return i
-        print("Respeaker not found, using default input device")
+        # print("Respeaker not found, using default input device")
         return None
     except Exception as e:
         print(f"Error finding Respeaker device: {e}")
@@ -157,6 +162,7 @@ def listen_print_loop(responses, stream, verbose=False):
         )
 
         if result.is_final:
+            print(f"{now()} [VAD] VAD done!")
             if verbose:
                 sys.stdout.write(GREEN)
                 sys.stdout.write("\033[K")

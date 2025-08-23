@@ -5,7 +5,7 @@ from typing import List, Dict
 
 
 class ConversationManager:
-    def __init__(self, history_file="conversation_history.json", max_history=20):
+    def __init__(self, history_file="conversation_history.json", max_history=40):
         self.history_file = history_file
         self.max_history = max_history
         self.conversation_history = self.load_history()

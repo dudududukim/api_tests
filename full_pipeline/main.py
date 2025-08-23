@@ -4,11 +4,16 @@ import argparse
 from dotenv import load_dotenv
 from stt_google_cloud import get_transcript
 from tts_gpt_elevenlabs import process_query
+import time
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--verbose', action='store_true', help='Enable verbose logging')
 parser.add_argument('--clear-history', action='store_true', help='Clear conversation history on start')
 args = parser.parse_args()
+
+def now():
+    return time.strftime('%H:%M:%S.') + f"{int((time.time() % 1) * 1000):03d}"
+
 
 load_dotenv()
 
@@ -48,7 +53,8 @@ try:
                 continue
                 
             if args.verbose:
-                print(f"인식된 쿼리: {query}")
+                pass
+            print(f"{now()} [Transcription] {query}")
             
             process_query(query, args.verbose)
             
